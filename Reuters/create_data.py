@@ -14,8 +14,7 @@ rows_all = []
 
 for i in range(0, len(data.tags)):
 	temp = data["text"][i]
-	temp = unicode(temp, errors='ignore')
-	temp = unicodedata.normalize('NFKD', temp).encode('ascii','ignore')
+	temp = unicodedata.normalize('NFKD', temp) #.encode('ascii','ignore')
 	# Replace characters.
 	for character in ["\n", "|", ">", "<", "-", "+", "^", "[", "]", "#", "\t", "\r", "`"]:
 		temp = temp.replace(character, " ")
@@ -24,3 +23,5 @@ for i in range(0, len(data.tags)):
 
 data_all = data_all.append(DataFrame(rows_all))
 data_all.to_pickle('all.pkl')
+
+print('finished saving data to all.pkl')

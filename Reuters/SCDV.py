@@ -4,7 +4,7 @@ import pandas as pd
 import time
 from nltk.corpus import stopwords
 import numpy as np
-from KaggleWord2VecUtility_Dheeraj import KaggleWord2VecUtility
+from KaggleWord2VecUtility import KaggleWord2VecUtility
 from numpy import float32
 import math
 from sklearn.ensemble import RandomForestClassifier
@@ -13,10 +13,10 @@ from sklearn.externals import joblib
 from sklearn.feature_extraction.text import TfidfVectorizer,HashingVectorizer
 from sklearn import svm
 import pickle
-import cPickle
+import _pickle as cPickle
 from math import *
 from sklearn.mixture import GaussianMixture
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MultiLabelBinarizer
 from pandas import DataFrame
 
@@ -33,22 +33,22 @@ def cluster_GMM(num_clusters, word_vectors):
 	# Get cluster assignments.
 	clf.fit(word_vectors)
 	idx = clf.predict(word_vectors)
-	print "Clustering Done...", time.time()-start, "seconds"
+	print("Clustering Done...", time.time()-start, "seconds")
 	# Get probabilities of cluster assignments.
 	idx_proba = clf.predict_proba(word_vectors)
 	# Dump cluster assignments and probability of cluster assignments. 
 	joblib.dump(idx, 'gmm_latestclusmodel_len2alldata.pkl')
-	print "Cluster Assignments Saved..."
+	print("Cluster Assignments Saved...")
 
 	joblib.dump(idx_proba, 'gmm_prob_latestclusmodel_len2alldata.pkl')
-	print "Probabilities of Cluster Assignments Saved..."
+	print("Probabilities of Cluster Assignments Saved...")
 	return (idx, idx_proba)
 
 def read_GMM(idx_name, idx_proba_name):
 	# Loads cluster assignments and probability of cluster assignments. 
 	idx = joblib.load(idx_name)
 	idx_proba = joblib.load(idx_proba_name)
-	print "Cluster Model Loaded..."
+	print("Cluster Model Loaded...")
 	return (idx, idx_proba)
 
 def get_probability_word_vectors(featurenames, word_centroid_map, num_clusters, word_idf_dict):
@@ -58,8 +58,11 @@ def get_probability_word_vectors(featurenames, word_centroid_map, num_clusters, 
 	for word in word_centroid_map:
 		prob_wordvecs[word] = np.zeros( num_clusters * num_features, dtype="float32" )
 		for index in range(0, num_clusters):
-			prob_wordvecs[word][index*num_features:(index+1)*num_features] = model[word] * word_centroid_prob_map[word][index] * word_idf_dict[word]
-
+			try:
+				prob_wordvecs[word][index*num_features:(index+1)*num_features] = model[word] * word_centroid_prob_map[word][index] * word_idf_dict[word]
+			except Exception as e:
+				print("error:", word)
+				continue
 
 	# prob_wordvecs_idf_len2alldata = {}
 
@@ -117,8 +120,8 @@ if __name__ == '__main__':
 	downsampling = 1e-3   # Downsample setting for frequent words
 
 	model_name = str(num_features) + "features_" + str(min_word_count) + "minwords_" + str(context) + "context_len2alldata"
-  	# Load the trained Word2Vec model.
-  	model = Word2Vec.load(model_name)
+	# Load the trained Word2Vec model.
+	model = Word2Vec.load(model_name)
   	# Get wordvectors for all words in vocabulary.
 	word_vectors = model.wv.syn0
 
@@ -151,7 +154,7 @@ if __name__ == '__main__':
 	idf = tfv._tfidf.idf_
 
 	# Creating a dictionary with word mapped to its idf value 
-	print "Creating word-idf dictionary for Training set..."
+	print("Creating word-idf dictionary for Training set...")
 
 	word_idf_dict = {}
 	for pair in zip(featurenames, idf):
@@ -161,7 +164,7 @@ if __name__ == '__main__':
 	prob_wordvecs = get_probability_word_vectors(featurenames, word_centroid_map, num_clusters, word_idf_dict)
 
 	temp_time = time.time() - start
-	print "Creating Document Vectors...:", temp_time, "seconds."
+	print("Creating Document Vectors...:", temp_time, "seconds.")
 
 	# Create train and text data.
 	lb = MultiLabelBinarizer()
@@ -188,13 +191,13 @@ if __name__ == '__main__':
 		gwbowv[counter] = create_cluster_vector_and_gwbowv(prob_wordvecs, words, word_centroid_map, word_centroid_prob_map, num_features, word_idf_dict, featurenames, num_clusters, train=True)
 		counter+=1
 		if counter % 1000 == 0:
-			print "Train text Covered : ",counter
+			print("Train text Covered : ",counter)
 
- 	gwbowv_name = "SDV_" + str(num_clusters) + "cluster_" + str(num_features) + "feature_matrix_gmm_sparse.npy"
+	gwbowv_name = "SDV_" + str(num_clusters) + "cluster_" + str(num_features) + "feature_matrix_gmm_sparse.npy"
 
 
 	endtime_gwbowv = time.time() - start
-	print "Created gwbowv_train: ", endtime_gwbowv, "seconds."
+	print("Created gwbowv_train: ", endtime_gwbowv, "seconds.")
 
 	gwbowv_test = np.zeros( (test["text"].size, num_clusters*(num_features)), dtype="float32")
 
@@ -207,18 +210,17 @@ if __name__ == '__main__':
 		gwbowv_test[counter] = create_cluster_vector_and_gwbowv(prob_wordvecs, words, word_centroid_map, word_centroid_prob_map, num_features, word_idf_dict, featurenames, num_clusters)
 		counter+=1
 		if counter % 1000 == 0:
-			print "Test Text Covered : ",counter
+			print("Test Text Covered : ",counter)
 
-    
 	test_gwbowv_name = "TEST_SDV_" + str(num_clusters) + "cluster_" + str(num_features) + "feature_matrix_gmm_sparse.npy"
 
-	print "Making sparse..."
+	print("Making sparse...")
 	# Set the threshold percentage for making it sparse. 
 	percentage = 0.04
 	min_no = min_no*1.0/len(train["text"])
 	max_no = max_no*1.0/len(train["text"])
-	print "Average min: ", min_no
-	print "Average max: ", max_no
+	print("Average min: ", min_no)
+	print("Average max: ", max_no)
 	thres = (abs(max_no) + abs(min_no))/2
 	thres = thres*percentage
 
@@ -234,6 +236,6 @@ if __name__ == '__main__':
 	np.save(test_gwbowv_name, gwbowv_test)
 	
 	endtime = time.time() - start
-	print "Total time taken: ", endtime, "seconds." 
+	print("Total time taken: ", endtime, "seconds." )
 
-	print "********************************************************"
+	print("********************************************************")

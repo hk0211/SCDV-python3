@@ -16,6 +16,7 @@ import urllib
 import tarfile
 import itertools
 from pandas import DataFrame
+import codecs
 
 ###############################################################################
 # Reuters Dataset related routines
@@ -146,8 +147,9 @@ class ReutersStreamReader():
             for filename in fnmatch.filter(filenames, '*.sgm'):
                 path = os.path.join(root, filename)
                 parser = ReutersParser()
-                for doc in parser.parse(open(path)):
-                    yield doc
+                with codecs.open(path, "r", "UTF-8", "ignore") as fd:
+                    for doc in parser.parse(fd):
+                        yield doc
 
 
 def get_minibatch(doc_iter, size):
