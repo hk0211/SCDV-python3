@@ -37,10 +37,10 @@ def cluster_GMM(num_clusters, word_vectors):
 	# Get probabilities of cluster assignments.
 	idx_proba = clf.predict_proba(word_vectors)
 	# Dump cluster assignments and probability of cluster assignments. 
-	joblib.dump(idx, 'gmm_latestclusmodel_len2alldata.pkl')
+	joblib.dump(idx, interim_folder + 'gmm_latestclusmodel_len2alldata.pkl')
 	print("Cluster Assignments Saved...")
 
-	joblib.dump(idx_proba, 'gmm_prob_latestclusmodel_len2alldata.pkl')
+	joblib.dump(idx_proba, interim_folder + 'gmm_prob_latestclusmodel_len2alldata.pkl')
 	print("Probabilities of Cluster Assignments Saved...")
 	return (idx, idx_proba)
 
@@ -56,12 +56,16 @@ def get_probability_word_vectors(featurenames, word_centroid_map, num_clusters, 
 	
 	prob_wordvecs = {}
 	for word in word_centroid_map:
-		prob_wordvecs[word] = np.zeros( num_clusters * num_features, dtype="float32" )
+		prob_wordvecs[word] = np.zeros( num_clusters * num_features, dtype="float32" )        
 		for index in range(0, num_clusters):
 			try:
 				prob_wordvecs[word][index*num_features:(index+1)*num_features] = model[word] * word_centroid_prob_map[word][index] * word_idf_dict[word]
 			except Exception as e:
-				print("error:", word)
+				print('check model:', word in model)
+				print('check word_centroid_prob_map:', word in word_centroid_prob_map)
+				print('check word_idf_dict:', word in word_idf_dict)
+
+				print("cannot find this word in model or idf dic:", word)
 				continue
 
 	# prob_wordvecs_idf_len2alldata = {}
@@ -111,6 +115,7 @@ def create_cluster_vector_and_gwbowv(prob_wordvecs, wordlist, word_centroid_map,
 
 if __name__ == '__main__':
 
+	interim_folder = './interim_data/'
 	start = time.time()
 
 	num_features = int(sys.argv[1])     # Word vector dimensionality
@@ -121,11 +126,11 @@ if __name__ == '__main__':
 
 	model_name = str(num_features) + "features_" + str(min_word_count) + "minwords_" + str(context) + "context_len2alldata"
 	# Load the trained Word2Vec model.
-	model = Word2Vec.load(model_name)
+	model = Word2Vec.load(interim_folder + model_name)
   	# Get wordvectors for all words in vocabulary.
 	word_vectors = model.wv.syn0
 
-	all = pd.read_pickle('all.pkl')
+	all = pd.read_pickle(interim_folder + 'all.pkl')
 
 	# Set number of clusters.
 	num_clusters = int(sys.argv[2])
@@ -148,7 +153,7 @@ if __name__ == '__main__':
 	for i in range( 0, len(all["text"])):
 		traindata.append(" ".join(KaggleWord2VecUtility.review_to_wordlist(all["text"][i], True)))
 
-	tfv = TfidfVectorizer(strip_accents='unicode',dtype=np.float32)
+	tfv = TfidfVectorizer(strip_accents='unicode', dtype=np.float32)
 	tfidfmatrix_traindata = tfv.fit_transform(traindata)
 	featurenames = tfv.get_feature_names()
 	idf = tfv._tfidf.idf_
@@ -232,8 +237,8 @@ if __name__ == '__main__':
 	gwbowv_test[temp] = 0
 	
 	#saving gwbowv train and test matrices
-	np.save(gwbowv_name, gwbowv)
-	np.save(test_gwbowv_name, gwbowv_test)
+	np.save(interim_folder + gwbowv_name, gwbowv)
+	np.save(interim_folder + test_gwbowv_name, gwbowv_test)
 	
 	endtime = time.time() - start
 	print("Total time taken: ", endtime, "seconds." )

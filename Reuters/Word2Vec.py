@@ -31,7 +31,7 @@ if __name__ == '__main__':
 	for review in train_word_vector["text"]:
 		try:
 			# Split a review into parsed sentences. (parsed by a period.)
-			sentences += KaggleWord2VecUtility.review_to_sentences(review, tokenizer)
+			sentences += KaggleWord2VecUtility.review_to_sentences(review, tokenizer, True)
 		except Exception as e:
 			print("Error on KaggleWord2Vec", e)
 			#continue
