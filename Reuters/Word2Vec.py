@@ -16,7 +16,7 @@ if __name__ == '__main__':
 	# The csv file might contain very huge fields, therefore set the field_size_limit to maximum.
 	csv.field_size_limit(sys.maxsize)
 	# Read train data.
-	train_word_vector = pd.read_pickle('all.pkl')
+	train_word_vector = pd.read_pickle('./interim_data/all.pkl')
 	print("Length of trained word vectors:", len(train_word_vector))
 	print("Length of trained word text vectors:", len(train_word_vector["text"]))
 
@@ -55,7 +55,7 @@ if __name__ == '__main__':
 	model.init_sims(replace=True)
 	# Save Word2Vec model.
 	print("Saving Word2Vec model...")
-	model.save(model_name)
+	model.save('./interim_data/' + model_name)
 	endmodeltime = time.time()
 
 	print("time : ", endmodeltime-start)

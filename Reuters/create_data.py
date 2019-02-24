@@ -22,6 +22,6 @@ for i in range(0, len(data.tags)):
 		rows_all.append({'text':temp, 'tags':data["tags"][i]})
 
 data_all = data_all.append(DataFrame(rows_all))
-data_all.to_pickle('all.pkl')
+data_all.to_pickle('./interim_data/all.pkl')
 
 print('finished saving data to all.pkl')
