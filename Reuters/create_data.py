@@ -6,7 +6,7 @@ from pandas import DataFrame
 import unicodedata
 
 # Get data from reuters folder.
-data_streamer = ReutersStreamReader('reuters').iterdocs()
+data_streamer = ReutersStreamReader('./reuters').iterdocs(1)
 data = get_minibatch(data_streamer, 50000)
 
 data_all = DataFrame({'text':[], 'tags':[]})
@@ -24,4 +24,5 @@ for i in range(0, len(data.tags)):
 data_all = data_all.append(DataFrame(rows_all))
 data_all.to_pickle('./interim_data/all.pkl')
 
-print('finished saving data to all.pkl')
+print('finished saving data to all.pkl... see data below to check.')
+print(data_all.head(2))

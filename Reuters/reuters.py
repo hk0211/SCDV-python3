@@ -141,10 +141,13 @@ class ReutersStreamReader():
         tfile.extractall(self.data_path)
         print("done !")
 
-    def iterdocs(self):
+    def iterdocs(self, number=-1):
         """Iterate doc by doc, yield a dict."""
         for root, _dirnames, filenames in os.walk(self.data_path):
-            for filename in fnmatch.filter(filenames, '*.sgm'):
+            files_list = (fnmatch.filter(filenames, '*.sgm')
+                          if number == -1
+                          else fnmatch.filter(filenames, '*.sgm')[:number])
+            for filename in files_list:
                 path = os.path.join(root, filename)
                 parser = ReutersParser()
                 with codecs.open(path, "r", "UTF-8", "ignore") as fd:
