@@ -15,6 +15,7 @@ if __name__ == '__main__':
 	start = time.time()
 	# The csv file might contain very huge fields, therefore set the field_size_limit to maximum.
 	csv.field_size_limit(sys.maxsize)
+    
 	# Read train data.
 	train_word_vector = pd.read_pickle('./interim_data/all.pkl')
 	print("Length of trained word vectors:", len(train_word_vector))
@@ -29,14 +30,13 @@ if __name__ == '__main__':
 	# Loop over each news article.
 	for review in train_word_vector["text"]:
 		try:
-			# Split a review into parsed sentences.
+			# Split a review into parsed sentences. (parsed by a period.)
 			sentences += KaggleWord2VecUtility.review_to_sentences(review, tokenizer)
 		except Exception as e:
 			print("Error on KaggleWord2Vec", e)
 			#continue
 
-	logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s',\
-        level=logging.INFO)
+	logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.WARN)
 
 	num_features = int(sys.argv[1])     # Word vector dimensionality
 	min_word_count = 20   # Minimum word count
@@ -53,6 +53,7 @@ if __name__ == '__main__':
 
 	model_name = str(num_features) + "features_" + str(min_word_count) + "minwords_" + str(context) + "context_len2alldata"
 	model.init_sims(replace=True)
+    
 	# Save Word2Vec model.
 	print("Saving Word2Vec model...")
 	model.save('./interim_data/' + model_name)
